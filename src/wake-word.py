@@ -1,14 +1,67 @@
 import pvporcupine
 from pvrecorder import PvRecorder
 import os
+import wave
+import time
 from dotenv import load_dotenv
 
 # Load variables from .env file
 load_dotenv()
 
-def invoke_assistant():
+SILENCE_THRESHOLD = 500
+SILENCE_DURATION = 1.5  # seconds
+SAMPLE_RATE = 16000
+
+
+def is_silent(pcm):
+    return max(abs(x) for x in pcm) < SILENCE_THRESHOLD
+
+
+def record_command(recorder):
+    print("Listening for command...")
+
+    audio_frames = []
+    silence_start = None
+
+    while True:
+        pcm = recorder.read()
+        audio_frames.extend(pcm)
+
+        if is_silent(pcm):
+            if silence_start is None:
+                silence_start = time.time()
+
+            elif time.time() - silence_start > SILENCE_DURATION:
+                print("Silence detected, stopping recording")
+                break
+        else:
+            silence_start = None
+
+    return audio_frames
+
+
+def save_audio(audio_frames):
+    filename = "command.wav"
+
+    with wave.open(filename, "w") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(SAMPLE_RATE)
+        # Convert each sample to a 16-bit little-endian PCM frame, then join into a bytes object
+        pcm_bytes = b"".join(int(x).to_bytes(2, "little", signed=True) for x in audio_frames)
+        wf.writeframes(pcm_bytes)
+
+    print("Audio saved:", filename)
+
+
+def invoke_assistant(recorder):
     print("Assistant activated!")
-    # TODO: start speech recognition here
+
+    audio_frames = record_command(recorder)
+    save_audio(audio_frames)
+
+    # Next step → speech-to-text
+
 
 access_key = os.getenv('PICOVOICE_ACCESS_KEY')
 if not access_key:
@@ -30,8 +83,8 @@ try:
         keyword_index = ppn.process(pcm)
 
         if keyword_index >= 0:
-            print("Wake word Hey Jarvis! detected!")
-            invoke_assistant()
+            print("Wake word Hey Jarvis detected!")
+            invoke_assistant(recorder)
 
 except KeyboardInterrupt:
     print("Stopping...")
