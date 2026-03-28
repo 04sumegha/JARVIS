@@ -26,6 +26,9 @@ def run_cli():
             return
 
         result = intent_recognition(prompt)
+        if "message_content" in result:
+            print(f"Result: {result['message_content']}")
+            continue
         function_name = result.get("function")
         args = result.get("args")
 
@@ -73,6 +76,9 @@ def run_wake_and_llm(wav_path: str = "command.wav"):
 
             if transcription:
                 response = intent_recognition(transcription)
+                if "message_content" in response:
+                    print(f"Result: {response['message_content']}")
+                    continue
                 function_name = response.get("function")
                 args = response.get("args")
 
