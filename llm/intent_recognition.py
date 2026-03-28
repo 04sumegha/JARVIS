@@ -37,5 +37,6 @@ def intent_recognition(prompt):
     logging.info(f"Tool to call: {tool_name} with args: {args}")
     return {
         "function": function_name,
-        "args": args
+        "args": args,
+        "tool_name": tool_name
     }

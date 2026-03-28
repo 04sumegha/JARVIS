@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SILENCE_THRESHOLD = 500
-SILENCE_DURATION = 4  # seconds
+SILENCE_DURATION = 2  # seconds
 SAMPLE_RATE = 16000
 
 
