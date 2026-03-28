@@ -22,6 +22,9 @@ def run_cli():
             return
 
         result = intent_recognition(prompt)
+        if "message_content" in result:
+            print(f"Result: {result['message_content']}")
+            continue
         function_name = result.get("function")
         args = result.get("args")
 
