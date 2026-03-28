@@ -59,5 +59,6 @@ def intent_recognition(prompt):
     return {
         "tool_name": tool_name,
         "function": function_name,
-        "args": args
+        "args": args,
+        "tool_name": tool_name
     }

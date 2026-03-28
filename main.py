@@ -6,7 +6,8 @@ from llm.intent_recognition import intent_recognition
 from llm.tool_service import names_to_functions
 from src.wake_word import run_wake_word_once
 from src.speech_to_text import transcribe_wav_file
-
+from src.text_to_speech import speak
+from utils.helpers import format_response
 
 def run_cli():
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -68,10 +69,10 @@ def run_wake_and_llm(wav_path: str = "command.wav"):
 
     try:
         while True:
-            captured_wav = run_wake_word_once(output_wav=wav_path)
-            print(f"Captured audio at: {captured_wav}")
+            captured_audio = run_wake_word_once(output_wav=wav_path)
+            print(f"Captured audio bytes: {len(captured_audio)} bytes")
 
-            transcription = transcribe_wav_file(captured_wav)
+            transcription = transcribe_wav_file(captured_audio)
             print(f"Transcription: {transcription}")
 
             if transcription:
@@ -81,6 +82,7 @@ def run_wake_and_llm(wav_path: str = "command.wav"):
                     continue
                 function_name = response.get("function")
                 args = response.get("args")
+                tool_name = response.get("tool_name")
 
                 try:
                     parsed_args = json.loads(args) if isinstance(args, str) else args
@@ -97,10 +99,19 @@ def run_wake_and_llm(wav_path: str = "command.wav"):
                         result_value = function_name(parsed_args)
 
                     print(f"LLM Result: {result_value}")
+                    
+                    # Speak the formatted response
+                    response_text = format_response(tool_name, result_value)
+                    print(f"Speaking: {response_text}")
+                    speak(response_text)
                 else:
-                    print("LLM did not pick a function to call.")
+                    response_text = "I could not understand that request."
+                    print(response_text)
+                    speak(response_text)
             else:
-                print("Could not transcribe audio as no audio was captured or transcription failed.")
+                error_msg = "Could not transcribe audio. Please try again."
+                print(error_msg)
+                speak(error_msg)
 
     except KeyboardInterrupt:
         print("Exiting wake-word mode.")

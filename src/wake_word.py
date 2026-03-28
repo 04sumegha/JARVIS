@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SILENCE_THRESHOLD = 500
-SILENCE_DURATION = 4  # seconds
+SILENCE_DURATION = 2  # seconds
 SAMPLE_RATE = 16000
 
 
@@ -65,8 +65,9 @@ def invoke_assistant(recorder):
     return frames_to_pcm_bytes(audio_frames)
 
 
-def run_wake_word_once(output_wav="command.wav"):
+def run_wake_word_once(output_wav="command.wav", speak_greeting=True):
     from config import PICOVOICE_ACCESS_KEY
+    from src.text_to_speech import speak
 
     keyword_path = os.path.join(os.path.dirname(__file__), "../models", "Jarvis.ppn")
 
@@ -83,6 +84,11 @@ def run_wake_word_once(output_wav="command.wav"):
 
             if keyword_index >= 0:
                 print("Wake word Hey Jarvis detected!")
+                
+                # Speak greeting after wake word is detected
+                if speak_greeting:
+                    speak("What can I do for you today?")
+                
                 audio_frames = record_command(recorder)
                 save_audio(audio_frames, filename=output_wav)
                 return output_wav
