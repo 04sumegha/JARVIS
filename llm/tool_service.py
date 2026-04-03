@@ -1,6 +1,7 @@
 import functools
 
-from services.keyboard import adjust_system_level, mute_volume, take_screenshot, unmute_volume
+from services.app import open_app
+from services.keyboard import adjust_mute_volume, adjust_system_level, take_screenshot
 
 tools = [
     {
@@ -38,24 +39,18 @@ tools = [
     {
     "type": "function",
         "function": {
-            "name": "mute_volume",
-            "description": "Mute system volume",
+            "name": "adjust_mute_volume",
+            "description": "Mute or unmute system volume based on the user request",
             "parameters": {
                 "type": "object",
-                "properties": {},
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "unmute_volume",
-            "description": "Unmute system volume",
-            "parameters": {
-                "type": "object",
-                "properties": {},
-                "required": []
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": ["mute", "unmute"],
+                        "description": "Whether to mute or unmute the system volume."
+                    }
+                },
+                "required": ["action"]
             }
         }
     },
@@ -75,12 +70,29 @@ tools = [
                 "required": []
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "open_app",
+            "description": "Open an application using the Windows 'start' command. The app_name must be a valid executable name or system-recognized command (e.g., 'chrome', 'code', 'notepad', 'explorer', 'shell:Downloads'). Avoid vague names like 'vs code' or 'file explorer'.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                "app_name": {
+                    "type": "string",
+                    "description": "A valid Windows command or executable name that works with 'start'. Examples: 'chrome', 'code', 'notepad', 'explorer', 'shell:Downloads'"
+                }
+                },
+                "required": ["app_name"]
+            }
+        }
     }
 ]
 
 names_to_functions = {
     "adjust_system_level": functools.partial(adjust_system_level),
-    "mute_volume": functools.partial(mute_volume),
-    "unmute_volume": functools.partial(unmute_volume),
-    "take_screenshot": functools.partial(take_screenshot)
+    "adjust_mute_volume": functools.partial(adjust_mute_volume),
+    "take_screenshot": functools.partial(take_screenshot),
+    "open_app": functools.partial(open_app)
 }

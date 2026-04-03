@@ -76,6 +76,14 @@ def unmute_volume():
     pyautogui.press("volumemute")
     return "Unmuted"
 
+def adjust_mute_volume(action):
+    action = (action or "").strip().lower()
+    if action == "mute":
+        return mute_volume()
+    if action == "unmute":
+        return unmute_volume()
+    raise ValueError("Invalid action. Use action: mute|unmute.")
+
 def take_screenshot(name: str = None, folder: str = "screenshots"):
     os.makedirs(folder, exist_ok=True)
 

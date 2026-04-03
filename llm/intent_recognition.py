@@ -1,7 +1,27 @@
 from groq import Groq, BadRequestError
 import logging
+import re
 from llm.client import client
 from llm.tool_service import tools, names_to_functions
+
+SPECIAL_FOLDERS = {
+    "desktop": "shell:Desktop",
+    "downloads": "shell:Downloads",
+    "documents": "shell:Documents",
+    "pictures": "shell:Pictures",
+    "videos": "shell:Videos",
+    "music": "shell:Music",
+    "screenshots": "shell:Screenshots",
+}
+
+def _match_open_special_folder(prompt: str) -> str | None:
+    text = prompt.strip().lower()
+    match = re.match(r"^open\s+(the\s+)?(.+)$", text)
+    if not match:
+        return None
+    target = match.group(2)
+    target = re.sub(r"\b(folder|dir|directory)\b", "", target).strip()
+    return SPECIAL_FOLDERS.get(target)
 
 def intent_recognition(prompt):
     SYSTEM_PROMPT = """
@@ -12,6 +32,20 @@ def intent_recognition(prompt):
 
         When a user asks to perform an action that matches a tool,
         you must call the correct tool.
+
+        When calling the open_app tool:
+        - Always return a valid Windows command usable with `start`
+        - Convert natural language to executable names
+        - Examples:
+        - "vs code" → "code"
+        - "visual studio code" → "code"
+        - "file explorer" → "explorer"
+        - "downloads folder" → "shell:Downloads"
+        - "screenshots folder" → "shell:Screenshots"
+        - Do NOT return conversational names
+
+        Use tool calls only; do not output tool calls or JSON in the message content.
+        When calling a tool, the arguments must be valid JSON with double quotes.
     """
 
     def _request(system_prompt):
@@ -26,6 +60,15 @@ def intent_recognition(prompt):
             temperature=0
         )
 
+    special_folder = _match_open_special_folder(prompt)
+    if special_folder:
+        logging.info("Matched special folder open request.")
+        return {
+            "tool_name": "open_app",
+            "function": names_to_functions.get("open_app"),
+            "args": {"app_name": special_folder},
+        }
+
     try:
         response = _request(SYSTEM_PROMPT)
     except BadRequestError:
@@ -36,6 +79,7 @@ def intent_recognition(prompt):
             + "\nValid tool names (use exactly as shown): "
             + tool_names
             + "\nReturn a tool call only; do not invent tools or change names."
+            + "\nUse valid JSON for tool arguments. Do not add extra text."
         )
         response = _request(strict_prompt)
 
@@ -59,6 +103,5 @@ def intent_recognition(prompt):
     return {
         "tool_name": tool_name,
         "function": function_name,
-        "args": args,
-        "tool_name": tool_name
+        "args": args
     }
