@@ -1,6 +1,6 @@
 import functools
 
-from services.app import open_app
+from services.app import open_app, close_app
 from services.keyboard import adjust_mute_volume, adjust_system_level, take_screenshot
 
 tools = [
@@ -87,6 +87,23 @@ tools = [
                 "required": ["app_name"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "close_app",
+            "description": "Close an application using the Windows 'taskkill' command. The app_name must be a valid executable name (e.g., 'chrome.exe', 'notepad.exe'). If the user provides a common name like 'chrome', append '.exe' automatically.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "app_name": {
+                        "type": "string",
+                        "description": "The executable name of the application to close (e.g., 'chrome.exe', 'notepad.exe', 'code.exe')."
+                    }
+                },
+                "required": ["app_name"]
+            }
+        }
     }
 ]
 
@@ -94,5 +111,6 @@ names_to_functions = {
     "adjust_system_level": functools.partial(adjust_system_level),
     "adjust_mute_volume": functools.partial(adjust_mute_volume),
     "take_screenshot": functools.partial(take_screenshot),
-    "open_app": functools.partial(open_app)
+    "open_app": functools.partial(open_app),
+    "close_app": functools.partial(close_app)
 }

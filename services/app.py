@@ -47,3 +47,49 @@ def open_app(app_name: str) -> str:
 
     except Exception as e:
         return f"Error opening {app_name}: {str(e)}"
+
+CRITICAL_PROCESSES = {
+    "explorer.exe",
+    "taskmgr.exe",
+    "lsass.exe",
+    "wininit.exe",
+    "winlogon.exe",
+    "csrss.exe",
+    "services.exe",
+    "svchost.exe",
+    "system",
+    "smss.exe"
+}
+
+def close_app(app_name: str) -> str:
+    """
+    Close an application using the Windows 'taskkill' command.
+    """
+    try:
+        app_name_lower = app_name.lower()
+        
+        # Check against blacklist
+        if app_name_lower in CRITICAL_PROCESSES or \
+           (not app_name_lower.endswith(".exe") and f"{app_name_lower}.exe" in CRITICAL_PROCESSES):
+            return f"Closing {app_name} is restricted as it is a critical system process."
+
+        # Try to kill with the provided name
+        result = subprocess.run(f'taskkill /F /IM "{app_name}" /T', shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            return f"Closed {app_name}"
+            
+        # If it failed and doesn't end in .exe, try appending .exe
+        if not app_name_lower.endswith(".exe"):
+            app_name_exe = app_name + ".exe"
+            if app_name_exe.lower() in CRITICAL_PROCESSES:
+                return f"Closing {app_name_exe} is restricted as it is a critical system process."
+                
+            result = subprocess.run(f'taskkill /F /IM "{app_name_exe}" /T', shell=True, capture_output=True, text=True)
+            if result.returncode == 0:
+                return f"Closed {app_name_exe}"
+        
+        return f"Could not close {app_name}. It might not be running."
+
+    except Exception as e:
+        return f"Error closing {app_name}: {str(e)}"

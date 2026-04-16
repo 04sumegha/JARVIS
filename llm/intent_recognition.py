@@ -44,7 +44,17 @@ def intent_recognition(prompt):
         - "screenshots folder" → "shell:Screenshots"
         - Do NOT return conversational names
 
+        When calling the close_app tool:
+        - Always return a valid Windows image name (usually ends in .exe)
+        - Examples:
+        - "close chrome" → "chrome.exe"
+        - "close visual studio code" → "code.exe"
+        - "close notepad" → "notepad.exe"
+        - IMPORTANT: Never attempt to close system-critical processes like "explorer.exe", "taskmgr.exe", or system drivers.
+        - If the user asks to close "file explorer", do NOT call close_app with "explorer.exe". Instead, respond that you cannot close the desktop shell.
+
         Use tool calls only; do not output tool calls or JSON in the message content.
+
         When calling a tool, the arguments must be valid JSON with double quotes.
     """
 
